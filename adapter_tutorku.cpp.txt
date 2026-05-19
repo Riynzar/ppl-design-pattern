@@ -1,0 +1,115 @@
+// ============================================================
+// ADAPTER DESIGN PATTERN — TutorKu Payment Gateway
+// Studi Kasus: Integrasi OVO, GoPay, DANA ke sistem TutorKu
+// ============================================================
+
+#include <iostream>
+#include <string>
+
+// ── TARGET INTERFACE ─────────────────────────────────────────
+// Interface seragam yang dikenal oleh sistem TutorKu
+class PaymentProcessor {
+public:
+    virtual void processPayment(std::string mahasiswa, double amount) = 0;
+    virtual std::string getProviderName() = 0;
+    virtual ~PaymentProcessor() {}
+};
+
+// ── ADAPTEE 1: OVO Gateway (third-party, tidak bisa diubah) ──
+class OVOGateway {
+public:
+    void sendOVOPayment(std::string user, double nominal) {
+        std::cout << "[OVO]  Transaksi dikirim ke OVO Server" << std::endl;
+        std::cout << "[OVO]  Pengguna  : " << user << std::endl;
+        std::cout << "[OVO]  Nominal   : Rp" << nominal << std::endl;
+        std::cout << "[OVO]  Status    : BERHASIL" << std::endl;
+    }
+};
+
+// ── ADAPTEE 2: GoPay Gateway (third-party, tidak bisa diubah) 
+class GoPayGateway {
+public:
+    void makeGoPayTransaction(std::string userId, double totalAmount) {
+        std::cout << "[GOPAY] Request ke GoPay API" << std::endl;
+        std::cout << "[GOPAY] User ID  : " << userId << std::endl;
+        std::cout << "[GOPAY] Total    : Rp" << totalAmount << std::endl;
+        std::cout << "[GOPAY] Status   : SUCCESS" << std::endl;
+    }
+};
+
+// ── ADAPTEE 3: DANA Gateway (third-party, tidak bisa diubah) ─
+class DANAGateway {
+public:
+    void executeDanaPayment(std::string accountName, double value) {
+        std::cout << "[DANA]  Proses pembayaran DANA" << std::endl;
+        std::cout << "[DANA]  Akun     : " << accountName << std::endl;
+        std::cout << "[DANA]  Nilai    : Rp" << value << std::endl;
+        std::cout << "[DANA]  Status   : SUKSES" << std::endl;
+    }
+};
+
+// ── ADAPTER 1: OVO ───────────────────────────────────────────
+class OVOAdapter : public PaymentProcessor {
+private:
+    OVOGateway ovoGateway;
+public:
+    void processPayment(std::string mahasiswa, double amount) override {
+        ovoGateway.sendOVOPayment(mahasiswa, amount);
+    }
+    std::string getProviderName() override { return "OVO"; }
+};
+
+// ── ADAPTER 2: GoPay ─────────────────────────────────────────
+class GoPayAdapter : public PaymentProcessor {
+private:
+    GoPayGateway gopayGateway;
+public:
+    void processPayment(std::string mahasiswa, double amount) override {
+        gopayGateway.makeGoPayTransaction(mahasiswa, amount);
+    }
+    std::string getProviderName() override { return "GoPay"; }
+};
+
+// ── ADAPTER 3: DANA ──────────────────────────────────────────
+class DANAAdapter : public PaymentProcessor {
+private:
+    DANAGateway danaGateway;
+public:
+    void processPayment(std::string mahasiswa, double amount) override {
+        danaGateway.executeDanaPayment(mahasiswa, amount);
+    }
+    std::string getProviderName() override { return "DANA"; }
+};
+
+// ── CLIENT: CheckoutService ───────────────────────────────────
+// Hanya mengenal PaymentProcessor, tidak tahu detail provider
+void checkoutSesiTutoring(PaymentProcessor& processor,
+                           std::string mahasiswa, double biaya) {
+    std::cout << "======================================" << std::endl;
+    std::cout << "  TutorKu — Checkout Sesi Tutoring" << std::endl;
+    std::cout << "  Mahasiswa : " << mahasiswa << std::endl;
+    std::cout << "  Biaya     : Rp" << biaya << std::endl;
+    std::cout << "  Provider  : " << processor.getProviderName() << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+    processor.processPayment(mahasiswa, biaya);
+    std::cout << "  Pemesanan sesi berhasil dikonfirmasi!" << std::endl;
+    std::cout << "======================================" << std::endl << std::endl;
+}
+
+int main() {
+    std::cout << std::endl;
+    std::cout << "  ADAPTER PATTERN — TutorKu Payment Gateway" << std::endl;
+    std::cout << "  Sistem TutorKu menggunakan interface seragam" << std::endl;
+    std::cout << "  untuk 3 provider berbeda tanpa ubah kode inti" << std::endl;
+    std::cout << std::endl;
+
+    OVOAdapter   ovo;
+    GoPayAdapter gopay;
+    DANAAdapter  dana;
+
+    checkoutSesiTutoring(ovo,   "Angela Vania",  50000);
+    checkoutSesiTutoring(gopay, "Berwyn Rafif",  80000);
+    checkoutSesiTutoring(dana,  "Riyannizaar",   60000);
+
+    return 0;
+}
